@@ -8,7 +8,7 @@ use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\BusinessController;
 use App\Http\Controllers\BusinessReservationController;
 use App\Http\Controllers\OwnerController;
-
+use App\Http\Controllers\NotificationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -35,7 +35,7 @@ Route::middleware('auth:api')->group(function () {
     // Rutas para usuarios
     Route::prefix('user')->group(function () {
         Route::get('/businesses', [BusinessController::class, 'index']); // Ver negocios
-        Route::post('/reservations', [ReservationController::class, 'create']); // Crear reserva
+        Route::post('/reservations', [ReservationController::class, 'store']); // Crear reserva
         Route::get('/reservations', [ReservationController::class, 'index']); // Listar reservas del usuario
         Route::get('/reservations/{id}', [ReservationController::class, 'show']); // Ver una reserva
         Route::put('/reservations/{id}', [ReservationController::class, 'update']); // Actualizar una reserva
@@ -44,7 +44,7 @@ Route::middleware('auth:api')->group(function () {
 
     // Rutas para empresarios
     Route::prefix('business-owner')->group(function () {
-        Route::post('/businesses', [BusinessController::class, 'create']); // Crear negocio
+        Route::post('/businesses', [BusinessController::class, 'store']); // Crear negocio
         Route::get('/businesses', [BusinessController::class, 'index']); // Ver todos los negocios
         Route::get('/businesses/{id}', [BusinessController::class, 'show']); // Ver un negocio específico
         Route::put('/businesses/{id}', [BusinessController::class, 'update']); // Actualizar negocio
@@ -58,5 +58,20 @@ Route::middleware('auth:api')->group(function () {
     });
 
     // Rutas para propietarios
-    Route::post('/owners', [OwnerController::class, 'store']);
+    Route::prefix('owner')->middleware('auth:api')->group(function () {
+        Route::post('/owners', [OwnerController::class, 'store']);  // Crear un nuevo propietario
+        Route::get('/owners', [OwnerController::class, 'index']);   // Listar todos los propietarios
+        Route::put('/owners/{id}', [OwnerController::class, 'update']);  // Actualizar un propietario
+        Route::delete('/owners/{id}', [OwnerController::class, 'destroy']);  // Eliminar un propietario
+    });
+
+
+    //Rutas de las notificaciones
+    Route::middleware('auth:api')->group(function () {
+        // Obtener todas las notificaciones
+        Route::get('/user/notifications', [NotificationController::class, 'index']);
+        // Marcar una notificación como leída
+        Route::put('/user/notifications/{id}/read', [NotificationController::class, 'read']);
+    });
+
 });

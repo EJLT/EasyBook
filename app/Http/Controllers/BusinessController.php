@@ -20,17 +20,18 @@ class BusinessController extends Controller
         return response()->json($business);
     }
 
-    public function create(Request $request)
+    public function store(Request $request)
     {
         $request->validate([
             'name' => 'required|string|max:255',
             'address' => 'required|string|max:255',
             'phone' => 'required|string|max:20',
             'email' => 'required|email|unique:businesses,email',
+            'owner_id' => 'required|exists:owners,id',
         ]);
 
         $business = new Business($request->all());
-        $business->owner_id = Auth::id();
+        $business->owner_id = $request->owner_id;
         $business->save();
 
         return response()->json($business, 201);
