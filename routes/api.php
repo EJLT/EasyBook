@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ReservationController;
@@ -42,25 +43,26 @@ Route::middleware('auth:api')->group(function () {
         Route::delete('/reservations/{id}', [ReservationController::class, 'destroy']); // Eliminar una reserva
     });
 
-    // Rutas para empresarios
-    Route::prefix('business-owner')->group(function () {
-        Route::post('/businesses', [BusinessController::class, 'store']); // Crear negocio
-        Route::get('/businesses', [BusinessController::class, 'index']); // Ver todos los negocios
-        Route::get('/businesses/{id}', [BusinessController::class, 'show']); // Ver un negocio específico
-        Route::put('/businesses/{id}', [BusinessController::class, 'update']); // Actualizar negocio
-        Route::delete('/businesses/{id}', [BusinessController::class, 'destroy']); // Eliminar negocio
+    Route::middleware('auth:business_owner')->group(function () {
+        Route::prefix('business-owner')->group(function () {
+            Route::post('/businesses', [BusinessController::class, 'store']); // Crear negocio
+            Route::get('/businesses', [BusinessController::class, 'index']); // Ver todos los negocios
+            Route::get('/businesses/{id}', [BusinessController::class, 'show']); // Ver un negocio específico
+            Route::put('/businesses/{id}', [BusinessController::class, 'update']); // Actualizar negocio
+            Route::delete('/businesses/{id}', [BusinessController::class, 'destroy']); // Eliminar negocio
 
-        // Gestión de reservas del negocio
-        Route::get('/businesses/{businessId}/reservations', [BusinessReservationController::class, 'index']); // Listar reservas de un negocio
-        Route::post('/reservations/{id}/confirm', [BusinessReservationController::class, 'confirm']); // Confirmar reserva
-        Route::post('/reservations/{id}/cancel', [BusinessReservationController::class, 'cancel']); // Cancelar reserva
-        Route::get('/reservations/stats', [BusinessReservationController::class, 'stats']); // Obtener estadísticas de reservas
+            // Gestión de reservas del negocio
+            Route::get('/businesses/{businessId}/reservations', [BusinessReservationController::class, 'index']); // Listar reservas de un negocio
+            Route::post('/reservations/{id}/confirm', [BusinessReservationController::class, 'confirm']); // Confirmar reserva
+            Route::post('/reservations/{id}/cancel', [BusinessReservationController::class, 'cancel']); // Cancelar reserva
+            Route::get('/reservations/stats', [BusinessReservationController::class, 'stats']); // Obtener estadísticas de reservas
+        });
     });
 
     // Rutas para propietarios
     Route::prefix('owner')->middleware('auth:api')->group(function () {
-        Route::post('/owners', [OwnerController::class, 'store']);  // Crear un nuevo propietario
         Route::get('/owners', [OwnerController::class, 'index']);   // Listar todos los propietarios
+        Route::post('/owners', [OwnerController::class, 'store']);  // Crear un nuevo propietario
         Route::put('/owners/{id}', [OwnerController::class, 'update']);  // Actualizar un propietario
         Route::delete('/owners/{id}', [OwnerController::class, 'destroy']);  // Eliminar un propietario
     });
@@ -74,4 +76,10 @@ Route::middleware('auth:api')->group(function () {
         Route::put('/user/notifications/{id}/read', [NotificationController::class, 'read']);
     });
 
+    Route::middleware('auth:api')->group(function () {
+        // Ruta para obtener la información del usuario autenticado
+        Route::get('user', [UserController::class, 'show']);
+        // Ruta para actualizar la información del usuario autenticado
+        Route::put('user', [UserController::class, 'update']);
+    });
 });

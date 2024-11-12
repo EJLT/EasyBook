@@ -12,10 +12,25 @@ class LoginController extends Controller
     {
         $credentials = $request->only('email', 'password');
 
-        if (!$token = JWTAuth::attempt($credentials)) {
-            return response()->json(['error' => 'Invalid credentials'], 401);
+        // Intentar con el guard de 'owners'
+        if ($token = auth('business_owner')->attempt($credentials)) {
+            $user = auth('business_owner')->user();
+            return response()->json([
+                'token' => $token,
+                'role' => 'owner'
+            ]);
         }
 
-        return response()->json(['token' => $token]);
+        // Intentar con el guard de 'users' si no es 'owner'
+        if ($token = auth('api')->attempt($credentials)) {
+            $user = auth('api')->user();
+            return response()->json([
+                'token' => $token,
+                'role' => 'user'
+            ]);
+        }
+
+        // Si no coincide, devolver error
+        return response()->json(['error' => 'Invalid credentials'], 401);
     }
 }

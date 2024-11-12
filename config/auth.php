@@ -45,6 +45,10 @@ return [
             'provider' => 'users',
             'hash' => false,
         ],
+        'business_owner' => [
+            'driver' => 'jwt',
+            'provider' => 'owners',
+        ],
     ],
 
     /*
@@ -69,11 +73,10 @@ return [
             'driver' => 'eloquent',
             'model' => App\Models\User::class,
         ],
-
-        // 'users' => [
-        //     'driver' => 'database',
-        //     'table' => 'users',
-        // ],
+        'owners' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\Owner::class,
+        ],
     ],
 
     /*

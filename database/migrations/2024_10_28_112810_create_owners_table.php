@@ -13,6 +13,7 @@ return new class extends Migration
             $table->string('name'); // Nombre del propietario
             $table->string('email')->unique(); // Correo electrónico único
             $table->string('phone')->nullable(); // Número de teléfono opcional
+            $table->string('password');
             $table->timestamps();
         });
     }
