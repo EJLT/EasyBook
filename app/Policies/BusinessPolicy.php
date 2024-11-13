@@ -15,7 +15,6 @@ class BusinessPolicy
      */
     public function view(User $user, Business $business)
     {
-        // Solo puede ver el negocio si es propietario
         return $user->id === $business->owner_id;
     }
 

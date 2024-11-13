@@ -11,75 +11,49 @@ use App\Http\Controllers\BusinessReservationController;
 use App\Http\Controllers\OwnerController;
 use App\Http\Controllers\NotificationController;
 
-/*
-|--------------------------------------------------------------------------
-| API Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register API routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "api" middleware group. Make something great!
-|
-*/
-
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
-});
-
 // Rutas públicas para registro e inicio de sesión
 Route::post('/login', [LoginController::class, 'login'])->name('login');
 Route::post('/register', [RegisterController::class, 'register'])->name('register');
 
+// Rutas para usuarios (accesibles solo si están autenticados)
+Route::middleware('auth:api')->prefix('user')->group(function () {
+    Route::get('/businesses', [BusinessController::class, 'index']);
+    Route::post('/reservations', [ReservationController::class, 'store']);
+    Route::get('/reservations', [ReservationController::class, 'index']);
+    Route::get('/reservations/{id}', [ReservationController::class, 'show']);
+    Route::put('/reservations/{id}', [ReservationController::class, 'update']);
+    Route::delete('/reservations/{id}', [ReservationController::class, 'destroy']);
+});
 
+// Rutas para propietarios de negocios (con rol 'owner', accesibles solo si son propietarios)
+Route::middleware(['auth:api', 'role:owner'])->prefix('owner')->group(function () {
+    Route::post('/businesses', [BusinessController::class, 'store']);
+    Route::get('/businesses', [BusinessController::class, 'index']);
+    Route::get('/businesses/{id}', [BusinessController::class, 'show']);
+    Route::put('/businesses/{id}', [BusinessController::class, 'update']);
+    Route::delete('/businesses/{id}', [BusinessController::class, 'destroy']);
+    Route::get('/businesses/{businessId}/reservations', [BusinessReservationController::class, 'index']);
+    Route::post('/reservations/{id}/confirm', [BusinessReservationController::class, 'confirm']);
+    Route::post('/reservations/{id}/cancel', [BusinessReservationController::class, 'cancel']);
+    Route::get('/reservations/stats', [BusinessReservationController::class, 'stats']);
+});
 
+// Rutas para gestionar propietarios (solo accesibles por admin u otro rol autorizado)
+Route::middleware(['auth:api', 'role:owner'])->prefix('owner')->group(function () {
+    Route::get('/owners', [OwnerController::class, 'index']);
+    Route::post('/owners', [OwnerController::class, 'store']);
+    Route::put('/owners/{id}', [OwnerController::class, 'update']);
+    Route::delete('/owners/{id}', [OwnerController::class, 'destroy']);
+});
+
+// Rutas de las notificaciones (accesibles solo si el usuario está autenticado)
 Route::middleware('auth:api')->group(function () {
-    // Rutas para usuarios
-    Route::prefix('user')->group(function () {
-        Route::get('/businesses', [BusinessController::class, 'index']); // Ver negocios
-        Route::post('/reservations', [ReservationController::class, 'store']); // Crear reserva
-        Route::get('/reservations', [ReservationController::class, 'index']); // Listar reservas del usuario
-        Route::get('/reservations/{id}', [ReservationController::class, 'show']); // Ver una reserva
-        Route::put('/reservations/{id}', [ReservationController::class, 'update']); // Actualizar una reserva
-        Route::delete('/reservations/{id}', [ReservationController::class, 'destroy']); // Eliminar una reserva
-    });
+    Route::get('/user/notifications', [NotificationController::class, 'index']);
+    Route::put('/user/notifications/{id}/read', [NotificationController::class, 'read']);
+});
 
-    Route::middleware('auth:business_owner')->group(function () {
-        Route::prefix('business-owner')->group(function () {
-            Route::post('/businesses', [BusinessController::class, 'store']); // Crear negocio
-            Route::get('/businesses', [BusinessController::class, 'index']); // Ver todos los negocios
-            Route::get('/businesses/{id}', [BusinessController::class, 'show']); // Ver un negocio específico
-            Route::put('/businesses/{id}', [BusinessController::class, 'update']); // Actualizar negocio
-            Route::delete('/businesses/{id}', [BusinessController::class, 'destroy']); // Eliminar negocio
-
-            // Gestión de reservas del negocio
-            Route::get('/businesses/{businessId}/reservations', [BusinessReservationController::class, 'index']); // Listar reservas de un negocio
-            Route::post('/reservations/{id}/confirm', [BusinessReservationController::class, 'confirm']); // Confirmar reserva
-            Route::post('/reservations/{id}/cancel', [BusinessReservationController::class, 'cancel']); // Cancelar reserva
-            Route::get('/reservations/stats', [BusinessReservationController::class, 'stats']); // Obtener estadísticas de reservas
-        });
-    });
-
-    // Rutas para propietarios
-    Route::prefix('owner')->middleware('auth:api')->group(function () {
-        Route::get('/owners', [OwnerController::class, 'index']);   // Listar todos los propietarios
-        Route::post('/owners', [OwnerController::class, 'store']);  // Crear un nuevo propietario
-        Route::put('/owners/{id}', [OwnerController::class, 'update']);  // Actualizar un propietario
-        Route::delete('/owners/{id}', [OwnerController::class, 'destroy']);  // Eliminar un propietario
-    });
-
-
-    //Rutas de las notificaciones
-    Route::middleware('auth:api')->group(function () {
-        // Obtener todas las notificaciones
-        Route::get('/user/notifications', [NotificationController::class, 'index']);
-        // Marcar una notificación como leída
-        Route::put('/user/notifications/{id}/read', [NotificationController::class, 'read']);
-    });
-
-    Route::middleware('auth:api')->group(function () {
-        // Ruta para obtener la información del usuario autenticado
-        Route::get('user', [UserController::class, 'show']);
-        // Ruta para actualizar la información del usuario autenticado
-        Route::put('user', [UserController::class, 'update']);
-    });
+// Rutas para la información del usuario (accesibles solo si el usuario está autenticado)
+Route::middleware('auth:api')->group(function () {
+    Route::get('user', [UserController::class, 'show']);
+    Route::put('user', [UserController::class, 'update']);
 });

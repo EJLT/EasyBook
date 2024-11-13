@@ -18,7 +18,7 @@ class Business extends Model
         'owner_id',
     ];
 
-    // Relación con el modelo Reservation
+
     public function reservations(): HasMany
     {
         return $this->hasMany(Reservation::class);

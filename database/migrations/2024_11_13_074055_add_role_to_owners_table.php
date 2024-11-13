@@ -11,15 +11,16 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->enum('role', ['user', 'owner'])->default('user'); //
+        Schema::table('owners', function (Blueprint $table) {
+            $table->string('role')->default('owner')->after('password');
         });
     }
-
-
+    /**
+     * Reverse the migrations.
+     */
     public function down()
     {
-        Schema::table('users', function (Blueprint $table) {
+        Schema::table('owners', function (Blueprint $table) {
             $table->dropColumn('role');
         });
     }

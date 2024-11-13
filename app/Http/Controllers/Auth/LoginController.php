@@ -12,25 +12,25 @@ class LoginController extends Controller
     {
         $credentials = $request->only('email', 'password');
 
-        // Intentar con el guard de 'owners'
-        if ($token = auth('business_owner')->attempt($credentials)) {
-            $user = auth('business_owner')->user();
+        // Intenta autenticarse como owner
+        if ($token = auth('owner')->attempt($credentials)) {
+            $user = auth('owner')->user();
             return response()->json([
                 'token' => $token,
-                'role' => 'owner'
+                'role' => $user->role
             ]);
         }
 
-        // Intentar con el guard de 'users' si no es 'owner'
+        // Intenta autenticarse como usuario normal
         if ($token = auth('api')->attempt($credentials)) {
             $user = auth('api')->user();
             return response()->json([
                 'token' => $token,
-                'role' => 'user'
+                'role' => $user->role
             ]);
         }
 
-        // Si no coincide, devolver error
+        // Si las credenciales no coinciden con ningún rol
         return response()->json(['error' => 'Invalid credentials'], 401);
     }
 }

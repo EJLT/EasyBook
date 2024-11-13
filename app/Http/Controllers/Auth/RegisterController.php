@@ -14,34 +14,44 @@ class RegisterController extends Controller
 {
     public function register(Request $request)
     {
+        // Validación de los datos de entrada
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:6|confirmed',
-            'role' => 'required|in:user,business_owner',
+            'role' => 'required|in:user,owner',
         ]);
 
-        // Verificar si el rol es 'business_owner'
-        if ($validatedData['role'] === 'business_owner') {
+        // Si el role es 'owner', creamos el propietario en ambas tablas
+        if ($validatedData['role'] === 'owner') {
             // Crear un propietario en la tabla 'owners'
             $owner = Owner::create([
                 'name' => $validatedData['name'],
                 'email' => $validatedData['email'],
                 'password' => Hash::make($validatedData['password']),
+                'role' => 'owner', // Definir el role como 'owner' para esta tabla
             ]);
 
-            // Crear un token JWT para el propietario
-            $token = JWTAuth::fromUser($owner);
+            // Crear el mismo usuario en la tabla 'users'
+            $user = User::create([
+                'name' => $validatedData['name'],
+                'email' => $validatedData['email'],
+                'password' => Hash::make($validatedData['password']),
+                'role' => 'owner', // También el role será 'owner' en la tabla 'users'
+            ]);
+
+            // Crear el token JWT para el propietario
+            $token = JWTAuth::fromUser($user);
 
             return response()->json(['token' => $token], 201);
         }
 
-        // Si no es un 'business_owner', crear un usuario normal
+        // Si el role es 'user', solo crear en la tabla 'users'
         $user = User::create([
             'name' => $validatedData['name'],
             'email' => $validatedData['email'],
             'password' => Hash::make($validatedData['password']),
-            'role' => $validatedData['role'],
+            'role' => 'user', // Definir el role como 'user' para esta tabla
         ]);
 
         $token = JWTAuth::fromUser($user);

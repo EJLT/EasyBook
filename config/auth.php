@@ -45,7 +45,7 @@ return [
             'provider' => 'users',
             'hash' => false,
         ],
-        'business_owner' => [
+        'owner' => [
             'driver' => 'jwt',
             'provider' => 'owners',
         ],

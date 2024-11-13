@@ -13,6 +13,8 @@ class OwnerController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'phone' => $request->phone,
+            'password' => bcrypt($request->password),
+            'role' => 'owner',
         ]);
 
         return response()->json($owner, 201);
