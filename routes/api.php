@@ -12,6 +12,7 @@ use App\Http\Controllers\OwnerController;
 use App\Http\Controllers\NotificationController;
 
 // Rutas públicas para registro e inicio de sesión
+
 Route::post('/login', [LoginController::class, 'login'])->name('login');
 Route::post('/register', [RegisterController::class, 'register'])->name('register');
 

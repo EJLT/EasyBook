@@ -5,11 +5,14 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Business;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class BusinessController extends Controller
 {
     public function index()
     {
+        Log::info('Accediendo a la ruta GET /businesses', ['user_id' => Auth::id()]); // Log para verificar la autenticación
+
         // Obtener todos los negocios
         $businesses = Business::all();
         return response()->json($businesses);
@@ -17,6 +20,8 @@ class BusinessController extends Controller
 
     public function show($id)
     {
+        Log::info('Accediendo a la ruta GET /businesses/' . $id, ['user_id' => Auth::id()]); // Log para verificar la autenticación
+
         // Obtener un negocio específico
         $business = Business::findOrFail($id);
 
@@ -28,6 +33,8 @@ class BusinessController extends Controller
 
     public function store(Request $request)
     {
+        Log::info('Accediendo a la ruta POST /businesses', ['user_id' => Auth::id(), 'token' => $request->bearerToken()]); // Log para verificar el token
+
         // Verificar si el usuario tiene permiso para crear un negocio
         $this->authorize('create', Business::class);
 
@@ -41,7 +48,7 @@ class BusinessController extends Controller
 
         // Asignar el propietario autenticado al nuevo negocio
         $business = new Business($request->all());
-        $business->owner_id = Auth::id(); // Asignar el ID del usuario autenticado como el propietario
+        $business->owner_id = Auth::id();
         $business->save();
 
         return response()->json($business, 201);
@@ -49,6 +56,8 @@ class BusinessController extends Controller
 
     public function update(Request $request, $id)
     {
+        Log::info('Accediendo a la ruta PUT /businesses/' . $id, ['user_id' => Auth::id()]); // Log para verificar la autenticación
+
         // Validar los datos de la solicitud
         $request->validate([
             'name' => 'sometimes|required|string|max:255',
@@ -76,6 +85,8 @@ class BusinessController extends Controller
 
     public function destroy($id)
     {
+        Log::info('Accediendo a la ruta DELETE /businesses/' . $id, ['user_id' => Auth::id()]); // Log para verificar la autenticación
+
         // Obtener el negocio a eliminar
         $business = Business::findOrFail($id);
 
