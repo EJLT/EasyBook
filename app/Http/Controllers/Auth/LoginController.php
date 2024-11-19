@@ -15,29 +15,18 @@ class LoginController extends Controller
 
         $credentials = $request->only('email', 'password');
 
-        // Intenta autenticarse como owner
-        if ($token = auth('owner')->attempt($credentials)) {
-            $user = auth('owner')->user();
-            Log::info('Inicio de sesión exitoso como owner', ['user_id' => $user->id, 'role' => $user->role]);
-
-            return response()->json([
-                'token' => $token,
-                'role' => $user->role
-            ]);
-        }
-
-        // Intenta autenticarse como usuario normal
+        // Autenticar usando el guard 'api' (el único guard configurado)
         if ($token = auth('api')->attempt($credentials)) {
             $user = auth('api')->user();
-            Log::info('Inicio de sesión exitoso como usuario', ['user_id' => $user->id, 'role' => $user->role]);
+            Log::info('Inicio de sesión exitoso', ['user_id' => $user->id, 'role' => $user->role]);
 
             return response()->json([
                 'token' => $token,
-                'role' => $user->role
+                'role' => $user->role, // Devuelve el rol del usuario
             ]);
         }
 
-        // Si las credenciales no coinciden con ningún rol
+        // Si las credenciales no coinciden
         Log::warning('Intento de inicio de sesión fallido con las credenciales', $credentials);
         return response()->json(['error' => 'Invalid credentials'], 401);
     }

@@ -11,7 +11,7 @@ class BusinessController extends Controller
 {
     public function index()
     {
-        Log::info('Accediendo a la ruta GET /businesses', ['user_id' => Auth::id()]); // Log para verificar la autenticación
+        Log::info('Accediendo a la ruta GET /businesses', ['user_id' => Auth::id()]);
 
         // Obtener todos los negocios
         $businesses = Business::all();
@@ -20,7 +20,7 @@ class BusinessController extends Controller
 
     public function show($id)
     {
-        Log::info('Accediendo a la ruta GET /businesses/' . $id, ['user_id' => Auth::id()]); // Log para verificar la autenticación
+        Log::info('Accediendo a la ruta GET /businesses/' . $id, ['user_id' => Auth::id()]);
 
         // Obtener un negocio específico
         $business = Business::findOrFail($id);
@@ -33,7 +33,7 @@ class BusinessController extends Controller
 
     public function store(Request $request)
     {
-        Log::info('Accediendo a la ruta POST /businesses', ['user_id' => Auth::id(), 'token' => $request->bearerToken()]); // Log para verificar el token
+        Log::info('Accediendo a la ruta POST /businesses', ['user_id' => Auth::id(), 'token' => $request->bearerToken()]);
 
         // Verificar si el usuario tiene permiso para crear un negocio
         $this->authorize('create', Business::class);
@@ -56,7 +56,13 @@ class BusinessController extends Controller
 
     public function update(Request $request, $id)
     {
-        Log::info('Accediendo a la ruta PUT /businesses/' . $id, ['user_id' => Auth::id()]); // Log para verificar la autenticación
+        Log::info('Accediendo a la ruta PUT /businesses/' . $id, ['user_id' => Auth::id()]);
+
+        // Obtener el negocio a actualizar
+        $business = Business::findOrFail($id);
+
+        // Verificar si el usuario tiene permiso para actualizar el negocio
+        $this->authorize('update', $business);
 
         // Validar los datos de la solicitud
         $request->validate([
@@ -66,17 +72,6 @@ class BusinessController extends Controller
             'email' => 'sometimes|required|email|unique:businesses,email,' . $id,
         ]);
 
-        // Obtener el negocio a actualizar
-        $business = Business::findOrFail($id);
-
-        // Verificar que el usuario autenticado es el propietario del negocio
-        if ($business->owner_id !== Auth::id()) {
-            return response()->json(['message' => 'Unauthorized.'], 403);
-        }
-
-        // Verificar si el usuario tiene permiso para actualizar el negocio
-        $this->authorize('update', $business);
-
         // Actualizar los datos del negocio
         $business->update($request->all());
 
@@ -85,15 +80,10 @@ class BusinessController extends Controller
 
     public function destroy($id)
     {
-        Log::info('Accediendo a la ruta DELETE /businesses/' . $id, ['user_id' => Auth::id()]); // Log para verificar la autenticación
+        Log::info('Accediendo a la ruta DELETE /businesses/' . $id, ['user_id' => Auth::id()]);
 
         // Obtener el negocio a eliminar
         $business = Business::findOrFail($id);
-
-        // Verificar que el usuario autenticado es el propietario del negocio
-        if ($business->owner_id !== Auth::id()) {
-            return response()->json(['message' => 'Unauthorized.'], 403);
-        }
 
         // Verificar si el usuario tiene permiso para eliminar el negocio
         $this->authorize('delete', $business);

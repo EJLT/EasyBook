@@ -10,6 +10,11 @@ class BusinessPolicy
 {
     use HandlesAuthorization;
 
+    public function create(User $user)
+    {
+        return $user->role === 'owner';
+    }
+
     /**
      * Determina si el usuario puede ver el negocio.
      */
@@ -17,6 +22,7 @@ class BusinessPolicy
     {
         return $user->id === $business->owner_id;
     }
+
 
     /**
      * Determina si el usuario puede modificar el negocio.
