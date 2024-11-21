@@ -13,10 +13,19 @@ class BusinessController extends Controller
     {
         Log::info('Accediendo a la ruta GET /businesses', ['user_id' => Auth::id()]);
 
-        // Obtener todos los negocios
-        $businesses = Business::all();
+        // Verificar el rol del usuario
+        if (Auth::user()->role === 'owner') {
+            // Si es un owner, filtrar los negocios que pertenecen a este propietario
+            $businesses = Business::where('owner_id', Auth::id())->get();
+        } else {
+            // Si es un user, devolver todos los negocios
+            $businesses = Business::all();
+        }
+
+        // Devolver los negocios en formato JSON
         return response()->json($businesses);
     }
+
 
     public function show($id)
     {
