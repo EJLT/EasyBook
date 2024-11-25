@@ -102,4 +102,6 @@ class BusinessController extends Controller
 
         return response()->json(['message' => 'Business deleted successfully.']);
     }
+
+
 }

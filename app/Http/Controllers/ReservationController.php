@@ -39,16 +39,42 @@ class ReservationController extends Controller
     // Obtener todas las reservas
     public function index()
     {
-        $reservations = Reservation::where('user_id', Auth::id())->get();
+        $reservations = Reservation::with('business') // Eager load de los negocios
+        ->where('user_id', Auth::id())
+            ->get();
+
+        // Añadir el nombre del negocio a cada reserva
+        $reservations = $reservations->map(function ($reservation) {
+            return [
+                'id' => $reservation->id,
+                'status' => $reservation->status,
+                'business_name' => $reservation->business->name,
+                'date' => $reservation->date,
+                'time' => $reservation->time,
+            ];
+        });
+
         return response()->json($reservations);
     }
 
     // Obtener una reserva específica
     public function show($id)
     {
-        $reservation = Reservation::findOrFail($id);
-        return response()->json($reservation);
+        // Obtener la reserva especificada por el ID
+        $reservation = Reservation::with('business') // Eager load del negocio relacionado
+        ->where('user_id', Auth::id()) // Asegurarse de que la reserva pertenece al usuario autenticado
+        ->findOrFail($id);
+
+        // Devolver la información relevante de la reserva junto con el negocio
+        return response()->json([
+            'id' => $reservation->id,
+            'status' => $reservation->status,
+            'business_name' => $reservation->business->name, // Nombre del negocio relacionado
+            'reservation_date' => $reservation->date, // Fecha de la reserva
+            'reservation_time' => $reservation->time, // Hora de la reserva
+        ]);
     }
+
 
     // Actualizar una reserva
     public function update(Request $request, $id)
