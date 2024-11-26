@@ -29,8 +29,7 @@ class ReservationController extends Controller
         // Guardar la reserva en la base de datos
         $reservation->save();
 
-        // Enviar la notificación de creación de reserva
-        $reservation->user->notify(new ReservationStatusUpdated($reservation));
+
 
         // Retornar la reserva creada con un estado 201
         return response()->json($reservation, 201);
@@ -91,8 +90,6 @@ class ReservationController extends Controller
         // Actualizar la reserva con los datos proporcionados
         $reservation->update($request->all());
 
-        // Enviar la notificación de actualización de reserva
-        $reservation->user->notify(new ReservationStatusUpdated($reservation));
 
         // Retornar la reserva actualizada
         return response()->json($reservation);
@@ -104,8 +101,6 @@ class ReservationController extends Controller
         $reservation = Reservation::findOrFail($id);
         $reservation->delete();
 
-        // Enviar la notificación de eliminación de reserva
-        $reservation->user->notify(new ReservationStatusUpdated($reservation));
 
         return response()->json(['message' => 'Reservation deleted successfully.']);
     }

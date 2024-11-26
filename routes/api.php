@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\Auth\TokenController;
 use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
@@ -10,7 +9,6 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\BusinessController;
 use App\Http\Controllers\BusinessReservationController;
-use App\Http\Controllers\OwnerController;
 use App\Http\Controllers\NotificationController;
 
 // Rutas públicas
@@ -25,7 +23,6 @@ Route::post('/register', [RegisterController::class, 'register']);
 // Rutas protegidas para usuarios
 Route::middleware(['auth:api', 'role:user'])->prefix('user')->group(function () {
     Route::get('/businesses', [BusinessController::class, 'index']); // Ver negocios
-    Route::get('businesses/{businessId}/schedule/{date}', [ScheduleController::class, 'getScheduleForBusiness']);
     Route::get('/user/businesses/{id}', [BusinessController::class, 'show']);
     Route::post('/reservations', [ReservationController::class, 'store']); // Crear reserva
     Route::get('/reservations', [ReservationController::class, 'index']); // Listar reservas
