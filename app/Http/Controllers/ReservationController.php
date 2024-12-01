@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Reservation;
-use App\Notifications\ReservationStatusUpdated;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -14,7 +13,7 @@ class ReservationController extends Controller
         $request->validate([
             'business_id' => 'required|exists:businesses,id',
             'date' => 'required|date',
-            'time' => 'required|date_format:H:i:s',
+            'time' => 'required|date_format:H:i',
         ]);
 
         // Crear la nueva reserva
@@ -22,14 +21,12 @@ class ReservationController extends Controller
             'user_id' => Auth::id(),
             'business_id' => $request->business_id,
             'date' => $request->date,
-            'time' => $request->time,
+            'time' => $request->time . ':00',
             'status' => 'pending',
         ]);
 
         // Guardar la reserva en la base de datos
         $reservation->save();
-
-
 
         // Retornar la reserva creada con un estado 201
         return response()->json($reservation, 201);
@@ -110,4 +107,5 @@ class ReservationController extends Controller
         $reservations = Reservation::where('business_id', $businessId)->get();
         return response()->json($reservations);
     }
+
 }

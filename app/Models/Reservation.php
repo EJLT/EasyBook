@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 
 class Reservation extends Model
 {
@@ -25,5 +26,10 @@ class Reservation extends Model
     public function business()
     {
         return $this->belongsTo(Business::class);
+    }
+
+    public function getTimeAttribute($value)
+    {
+        return Carbon::createFromFormat('H:i:s', $value)->format('H:i');
     }
 }
