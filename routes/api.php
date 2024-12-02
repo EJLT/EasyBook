@@ -41,7 +41,7 @@ Route::middleware(['auth:api', 'role:owner'])->prefix('owner')->group(function (
     Route::get('/businesses/{businessId}/reservations', [BusinessReservationController::class, 'index']); // Ver reservas del negocio
     Route::post('/reservations/{id}/confirm', [BusinessReservationController::class, 'confirm']); // Confirmar reserva
     Route::post('/reservations/{id}/cancel', [BusinessReservationController::class, 'cancel']); // Cancelar reserva
-    Route::get('/reservations/stats', [BusinessReservationController::class, 'stats']); // Estadísticas de reservas
+    Route::get('/reservations/stats/{businessId}', [BusinessReservationController::class, 'stats']); // Estadísticas de reservas
 });
 // Notificaciones
 Route::middleware(['auth:api'])->group(function () {
