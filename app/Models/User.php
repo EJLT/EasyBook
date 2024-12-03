@@ -44,7 +44,6 @@ class User extends Authenticatable implements JWTSubject
         'password' => 'hashed',
     ];
 
-    // Métodos requeridos por la interfaz JWTSubject
     public function getJWTIdentifier()
     {
         return $this->getKey();
@@ -55,7 +54,7 @@ class User extends Authenticatable implements JWTSubject
         return [];
     }
 
-    public function reservations()
+    public function reservation()
     {
         return $this->hasMany(Reservation::class);
     }

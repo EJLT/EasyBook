@@ -29,10 +29,17 @@ class ReservationController extends Controller
         $reservation->save();
 
         // Retornar la reserva creada con un estado 201
-        return response()->json($reservation, 201);
+        return response()->json([
+            'id' => $reservation->id,
+            'status' => $reservation->status,
+            'business_name' => $reservation->business->name,
+            'user_name' => $reservation->user->name, // Aquí agregas el nombre del usuario
+            'date' => $reservation->date,
+            'time' => $reservation->time
+        ], 201);
     }
 
-    // Obtener todas las reservas
+        // Obtener todas las reservas
     public function index()
     {
         $reservations = Reservation::with('business') // Eager load de los negocios
@@ -45,6 +52,7 @@ class ReservationController extends Controller
                 'id' => $reservation->id,
                 'status' => $reservation->status,
                 'business_name' => $reservation->business->name,
+                'user_name' => $reservation->user->name,
                 'date' => $reservation->date,
                 'time' => $reservation->time,
             ];
