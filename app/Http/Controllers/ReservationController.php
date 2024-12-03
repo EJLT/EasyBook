@@ -86,14 +86,16 @@ class ReservationController extends Controller
         $request->validate([
             'business_id' => 'sometimes|required|exists:businesses,id',
             'date' => 'sometimes|required|date',
-            'time' => 'sometimes|required',
+            'time' => 'required|date_format:H:i',
         ]);
 
         // Obtener la reserva
         $reservation = Reservation::findOrFail($id);
 
-        // Actualizar la reserva con los datos proporcionados
-        $reservation->update($request->all());
+        // Actualizar la fecha y hora de la reserva
+        $reservation->date = $request->date;
+        $reservation->time = $request->time . ':00'; // Asegurarse de que incluye segundos
+        $reservation->save();
 
 
         // Retornar la reserva actualizada
