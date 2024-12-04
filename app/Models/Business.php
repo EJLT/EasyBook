@@ -16,6 +16,7 @@ class Business extends Model
         'phone',
         'email',
         'owner_id',
+        'category_id',
     ];
 
 
@@ -23,4 +24,10 @@ class Business extends Model
     {
         return $this->hasMany(Reservation::class);
     }
+
+    public function category()
+    {
+        return $this->belongsTo(Category::class);
+    }
+
 }

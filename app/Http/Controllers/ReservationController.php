@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Reservation;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -15,6 +16,17 @@ class ReservationController extends Controller
             'date' => 'required|date',
             'time' => 'required|date_format:H:i',
         ]);
+
+        // Obtener la hora actual en Europa/Madrid
+        $now = Carbon::now('Europe/Madrid');
+
+        // Crear un objeto Carbon con la fecha y hora proporcionadas por el usuario
+        $reservationDateTime = Carbon::createFromFormat('Y-m-d H:i', $request->date . ' ' . $request->time, 'Europe/Madrid');
+
+        // Verificar si la fecha y hora de la reserva son en el pasado
+        if ($reservationDateTime->isBefore($now)) {
+            return response()->json(['message' => 'You cannot reserve a time in the past.'], 400);
+        }
 
         // Crear la nueva reserva
         $reservation = new Reservation([
@@ -33,20 +45,20 @@ class ReservationController extends Controller
             'id' => $reservation->id,
             'status' => $reservation->status,
             'business_name' => $reservation->business->name,
-            'user_name' => $reservation->user->name, // Aquí agregas el nombre del usuario
+            'user_name' => $reservation->user->name,
             'date' => $reservation->date,
             'time' => $reservation->time
         ], 201);
     }
 
-        // Obtener todas las reservas
+    // Obtener todas las reservas
     public function index()
     {
         $reservations = Reservation::with('business') // Eager load de los negocios
         ->where('user_id', Auth::id())
             ->get();
 
-        // Añadir el nombre del negocio a cada reserva
+
         $reservations = $reservations->map(function ($reservation) {
             return [
                 'id' => $reservation->id,
@@ -86,31 +98,43 @@ class ReservationController extends Controller
         $request->validate([
             'business_id' => 'sometimes|required|exists:businesses,id',
             'date' => 'sometimes|required|date',
-            'time' => 'required|date_format:H:i',
+            'time' => 'sometimes|required|date_format:H:i',
         ]);
 
         // Obtener la reserva
         $reservation = Reservation::findOrFail($id);
 
-        // Actualizar la fecha y hora de la reserva
-        $reservation->date = $request->date;
-        $reservation->time = $request->time . ':00'; // Asegurarse de que incluye segundos
-        $reservation->save();
+        // Obtener la hora actual en Europa/Madrid
+        $now = Carbon::now('Europe/Madrid');
 
+        // Verificar si se está intentando actualizar la fecha o la hora
+        if ($request->has('date') || $request->has('time')) {
+            $newDate = $request->date ?? $reservation->date;
+            $newTime = $request->time ?? $reservation->time;
+
+            // Crear un objeto Carbon con la nueva fecha y hora
+            $newDateTime = Carbon::createFromFormat('Y-m-d H:i', $newDate . ' ' . $newTime, 'Europe/Madrid');
+
+            // Verificar si la nueva fecha y hora están en el pasado
+            if ($newDateTime->isBefore($now)) {
+                return response()->json(['message' => 'You cannot update a reservation to a past time.'], 400);
+            }
+
+            // Actualizar la fecha y hora
+            $reservation->date = $newDate;
+            $reservation->time = $newTime . ':00';
+        }
+        // Actualizar otros campos si se proporcionan
+        if ($request->has('business_id')) {
+            $reservation->business_id = $request->business_id;
+        }
+
+        $reservation->save();
 
         // Retornar la reserva actualizada
         return response()->json($reservation);
     }
 
-    // Eliminar una reserva
-    public function destroy($id)
-    {
-        $reservation = Reservation::findOrFail($id);
-        $reservation->delete();
-
-
-        return response()->json(['message' => 'Reservation deleted successfully.']);
-    }
 
     public function reservationsByBusiness($businessId)
     {

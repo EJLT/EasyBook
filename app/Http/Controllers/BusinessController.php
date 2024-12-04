@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Business;
+use App\Models\Category; // Asegúrate de importar el modelo Category
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
@@ -25,7 +26,6 @@ class BusinessController extends Controller
         // Devolver los negocios en formato JSON
         return response()->json($businesses);
     }
-
 
     public function show($id)
     {
@@ -53,15 +53,26 @@ class BusinessController extends Controller
             'address' => 'required|string|max:255',
             'phone' => 'required|string|max:20',
             'email' => 'required|email|unique:businesses,email',
+            'category_name' => 'required|string|max:255',
         ]);
+
+        // Buscar la categoría por nombre
+        $category = Category::where('name', $request->category_name)->first();
+
+        // Si no existe la categoría, devolver un error
+        if (!$category) {
+            return response()->json(['error' => 'Category not found'], 404);
+        }
 
         // Asignar el propietario autenticado al nuevo negocio
         $business = new Business($request->all());
         $business->owner_id = Auth::id();
-        $business->save();
+        $business->category_id = $category->id; // Asignar el ID de la categoría
+        $business->save(); // Guardar el negocio
 
         return response()->json($business, 201);
     }
+
 
     public function update(Request $request, $id)
     {
@@ -79,13 +90,28 @@ class BusinessController extends Controller
             'address' => 'sometimes|required|string|max:255',
             'phone' => 'sometimes|required|string|max:20',
             'email' => 'sometimes|required|email|unique:businesses,email,' . $id,
+            'category_name' => 'required|string|max:255', // Validar que category_name esté presente
         ]);
 
-        // Actualizar los datos del negocio
-        $business->update($request->all());
+        // Actualizar los datos del negocio (excepto categoría)
+        $business->update($request->except('category_name')); // Excluir category_name de la actualización
+
+        // Si se proporciona un nuevo nombre de categoría, buscar el category_id correspondiente
+        if ($request->has('category_name')) {
+            $category = Category::where('name', $request->category_name)->first();
+
+            // Verificar si la categoría existe
+            if ($category) {
+                $business->category_id = $category->id; // Actualizar el category_id
+                $business->save();
+            } else {
+                return response()->json(['error' => 'Categoría no encontrada.'], 404);
+            }
+        }
 
         return response()->json($business);
     }
+
 
     public function destroy($id)
     {

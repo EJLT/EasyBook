@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Resources\ReservationResource;
-use Illuminate\Http\Request;
+use Carbon\Carbon;
+
 use App\Models\Reservation;
 use App\Models\Business;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class BusinessReservationController extends Controller
 {
@@ -18,18 +19,27 @@ class BusinessReservationController extends Controller
             return response()->json(['message' => 'Unauthorized.'], 403);
         }
 
-        // Obtener las reservas del negocio con el nombre del usuario
-        $reservations = $business->reservations()->with('user:id,name')->get();
+        // Obtener la hora actual en la zona horaria de Europa/Madrid
+        $now = Carbon::now('Europe/Madrid');
+
+        // Filtrar reservas futuras o actuales correctamente
+        $reservations = Reservation::where('business_id', $businessId)
+            ->where(function ($query) use ($now) {
+                $query->where('date', '>', $now->toDateString())
+                    ->orWhere(function ($subQuery) use ($now) {
+                        $subQuery->where('date', '=', $now->toDateString())
+                            ->where('time', '>', $now->toTimeString());
+                    });
+            })
+            ->get();
 
         // Mapear las reservas y extraer el nombre del usuario
-        $reservationsWithUserName = $reservations->map(function($reservation) {
-            // Añadir el nombre del usuario y eliminar la relación 'user'
+        $reservationsWithUserName = $reservations->map(function ($reservation) {
             $reservation->user_name = $reservation->user->name;
             unset($reservation->user);
             return $reservation;
         });
 
-        // Devolver las reservas, ahora con el nombre del usuario sin 'user'
         return response()->json($reservationsWithUserName);
     }
 
@@ -84,5 +94,25 @@ class BusinessReservationController extends Controller
         ];
 
         return response()->json($stats);
+    }
+
+    public function confirmAll($businessId)
+    {
+        $business = Business::findOrFail($businessId);
+
+        if ($business->owner_id !== Auth::id()) {
+            return response()->json(['message' => 'Unauthorized.'], 403);
+        }
+
+        DB::transaction(function () use ($business) {
+            $reservations = $business->reservations()->where('status', 'pending')->get();
+
+            foreach ($reservations as $reservation) {
+                $reservation->status = 'confirmed';
+                $reservation->save();
+            }
+        });
+
+        return response()->json(['message' => 'Todas las reservas han sido confirmadas.']);
     }
 }
