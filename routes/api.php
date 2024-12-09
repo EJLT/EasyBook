@@ -29,6 +29,9 @@ Route::middleware(['auth:api', 'role:user'])->prefix('user')->group(function () 
     Route::delete('/reservations/{id}', [ReservationController::class, 'destroy']); // Borrar reserva
     Route::get('/user/{id}', [UserController::class, 'show']);
     Route::put('/user/{id}', [UserController::class, 'update']);
+    Route::get('/test-email', [ReservationController::class, 'sendTestEmail']); //prueba de notificación
+    Route::get('/reservations/history', [ReservationController::class, 'history']); //Historial de reservas
+
 });
 
 // Rutas protegidas para propietarios
@@ -43,9 +46,8 @@ Route::middleware(['auth:api', 'role:owner'])->prefix('owner')->group(function (
     Route::post('/reservations/{id}/cancel', [BusinessReservationController::class, 'cancel']); // Cancelar reserva
     Route::post('/businesses/{businessId}/reservations/confirm-all', [BusinessReservationController::class, 'confirmAll']);
     Route::get('/reservations/stats/{businessId}', [BusinessReservationController::class, 'stats']); // Estadísticas de reservas
-    Route::get('/user/{id}', [UserController::class, 'show']);
-    Route::put('/user/{id}', [UserController::class, 'update']);
 });
+
 // Notificaciones
 Route::middleware(['auth:api'])->group(function () {
     Route::get('/notifications', [NotificationController::class, 'index']);

@@ -6,6 +6,8 @@ use App\Models\Reservation;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\ReservationNotification;
 
 class ReservationController extends Controller
 {
@@ -17,18 +19,13 @@ class ReservationController extends Controller
             'time' => 'required|date_format:H:i',
         ]);
 
-        // Obtener la hora actual en Europa/Madrid
         $now = Carbon::now('Europe/Madrid');
-
-        // Crear un objeto Carbon con la fecha y hora proporcionadas por el usuario
         $reservationDateTime = Carbon::createFromFormat('Y-m-d H:i', $request->date . ' ' . $request->time, 'Europe/Madrid');
 
-        // Verificar si la fecha y hora de la reserva son en el pasado
         if ($reservationDateTime->isBefore($now)) {
             return response()->json(['message' => 'You cannot reserve a time in the past.'], 400);
         }
 
-        // Crear la nueva reserva
         $reservation = new Reservation([
             'user_id' => Auth::id(),
             'business_id' => $request->business_id,
@@ -36,11 +33,11 @@ class ReservationController extends Controller
             'time' => $request->time . ':00',
             'status' => 'pending',
         ]);
-
-        // Guardar la reserva en la base de datos
         $reservation->save();
 
-        // Retornar la reserva creada con un estado 201
+        // Enviar correo al usuario
+        Mail::to(Auth::user()->email)->send(new ReservationNotification($reservation, 'created'));
+
         return response()->json([
             'id' => $reservation->id,
             'status' => $reservation->status,
@@ -54,12 +51,23 @@ class ReservationController extends Controller
     // Obtener todas las reservas
     public function index()
     {
+        // Obtener la hora actual en la zona horaria de Europa/Madrid
+        $now = Carbon::now('Europe/Madrid');
+
+        // Filtrar reservas futuras o pendientes del usuario autenticado
         $reservations = Reservation::with('business') // Eager load de los negocios
         ->where('user_id', Auth::id())
+            ->where(function ($query) use ($now) {
+                $query->where('date', '>', $now->toDateString())
+                    ->orWhere(function ($subQuery) use ($now) {
+                        $subQuery->where('date', '=', $now->toDateString())
+                            ->where('time', '>', $now->toTimeString());
+                    });
+            })
             ->get();
 
-
-        $reservations = $reservations->map(function ($reservation) {
+        // Formatear las reservas
+        $formattedReservations = $reservations->map(function ($reservation) {
             return [
                 'id' => $reservation->id,
                 'status' => $reservation->status,
@@ -70,7 +78,7 @@ class ReservationController extends Controller
             ];
         });
 
-        return response()->json($reservations);
+        return response()->json($formattedReservations);
     }
 
     // Obtener una reserva específica
@@ -135,6 +143,18 @@ class ReservationController extends Controller
         return response()->json($reservation);
     }
 
+    public function destroy($id)
+    {
+        // Buscar la reserva por su ID
+        $reservation = Reservation::where('user_id', Auth::id())->findOrFail($id);
+
+        // Eliminar la reserva
+        $reservation->delete();
+
+        // Retornar una respuesta de éxito
+        return response()->json(['message' => 'Reservation deleted successfully.'], 200);
+    }
+
 
     public function reservationsByBusiness($businessId)
     {
@@ -142,4 +162,36 @@ class ReservationController extends Controller
         return response()->json($reservations);
     }
 
+    public function sendTestEmail()
+    {
+        Mail::raw('This is a test email.', function ($message) {
+            $message->to('eduardikolaborda@gmail.com')  // Cambia a tu correo electrónico
+            ->subject('Test Email');
+        });
+
+        return response()->json(['message' => 'Test email sent']);
+    }
+
+    public function history()
+    {
+        // Obtener todas las reservas del usuario autenticado
+        $reservations = Reservation::with('business') // Eager load del negocio
+        ->where('user_id', Auth::id()) // Filtrar por el usuario autenticado
+        ->get();
+
+        // Formatear las reservas
+        $formattedReservations = $reservations->map(function ($reservation) {
+            return [
+                'id' => $reservation->id,
+                'status' => $reservation->status,
+                'business_name' => $reservation->business->name,
+                'user_name' => $reservation->user->name,
+                'date' => $reservation->date,
+                'time' => $reservation->time,
+            ];
+        });
+
+        return response()->json($formattedReservations);
+
+    }
 }

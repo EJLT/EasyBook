@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\ReservationNotification;
 use Carbon\Carbon;
 
 use App\Models\Reservation;
 use App\Models\Business;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 
 class BusinessReservationController extends Controller
 {
@@ -56,6 +58,9 @@ class BusinessReservationController extends Controller
         $reservation->status = 'confirmed';
         $reservation->save();
 
+        // Notificar al usuario
+        Mail::to($reservation->user->email)->send(new ReservationNotification($reservation, 'updated'));
+
         return response()->json(['message' => 'Reservation confirmed successfully.']);
     }
 
@@ -71,9 +76,11 @@ class BusinessReservationController extends Controller
         $reservation->status = 'cancelled';
         $reservation->save();
 
+        // Notificar al usuario
+        Mail::to($reservation->user->email)->send(new ReservationNotification($reservation, 'updated'));
+
         return response()->json(['message' => 'Reservation cancelled successfully.']);
     }
-
     public function stats($businessId)
     {
         $business = Business::findOrFail($businessId);
@@ -110,9 +117,13 @@ class BusinessReservationController extends Controller
             foreach ($reservations as $reservation) {
                 $reservation->status = 'confirmed';
                 $reservation->save();
+
+                // Notificar al usuario
+                Mail::to($reservation->user->email)->send(new ReservationNotification($reservation, 'updated'));
             }
         });
 
-        return response()->json(['message' => 'Todas las reservas han sido confirmadas.']);
+        return response()->json(['message' => 'Todas las reservas han sido confirmadas y se ha notificado a los usuarios.']);
     }
+
 }
